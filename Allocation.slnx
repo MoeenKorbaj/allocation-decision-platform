@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Allocation.Agents/Allocation.Agents.csproj" />
+    <Project Path="src/Allocation.Domain/Allocation.Domain.csproj" />
+    <Project Path="src/Allocation.Engine/Allocation.Engine.csproj" />
+    <Project Path="src/Allocation.McpServer.Engine/Allocation.McpServer.Engine.csproj" />
+    <Project Path="src/Allocation.McpServer.Registry/Allocation.McpServer.Registry.csproj" />
+    <Project Path="src/Allocation.Portal/Allocation.Portal.csproj" />
+    <Project Path="src/Allocation.Shared/Allocation.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Engine.Determinism/">
+    <Project Path="tests/Engine.Determinism/Allocation.Tests.Engine.Determinism.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/">
+    <Project Path="tests/Integration/Allocation.Tests.Integration.csproj" />
+  </Folder>
+  <Folder Name="/tests/Unit/">
+    <Project Path="tests/Unit/Allocation.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
