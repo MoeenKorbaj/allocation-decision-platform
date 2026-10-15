@@ -1,0 +1,18 @@
+# azd: one command to create (azd up) or remove (azd down) an environment. See ADR-10.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: allocation-decision-platform
+
+infra:
+  provider: bicep
+  path: infra
+  module: main
+
+services:
+  portal:
+    project: ./src/Allocation.Portal
+    language: dotnet
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: ../..          # repository root: the portal needs global.json, Directory.*.props and Allocation.Shared
+      remoteBuild: true       # build in Azure Container Registry, no local Docker required

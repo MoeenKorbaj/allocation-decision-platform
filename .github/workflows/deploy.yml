@@ -1,0 +1,102 @@
+# Deploy: build the portal image in ACR and roll it out to dev, then to prod after approval.
+# Authentication is OIDC only (ADR-12): no secrets, short-lived tokens, one identity per environment.
+# Infrastructure is NOT changed here: `azd provision` is run by the owner, so the pipeline
+# identity cannot modify policies or role assignments.
+#
+# Trigger is manual for now. After the first successful run, add:
+#   push:
+#     branches: [main]
+name: deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # required to request the OIDC token
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  dev:
+    name: deploy-dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: dev
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build image in ACR
+        run: |
+          az acr build --registry "${{ vars.AZURE_CONTAINER_REGISTRY_NAME }}" \
+            --image "portal:${{ github.sha }}" \
+            --file src/Allocation.Portal/Dockerfile .
+
+      - name: Deploy to Container Apps
+        id: deploy
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          image="${{ vars.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/portal:${{ github.sha }}"
+          az containerapp update -n "${{ vars.SERVICE_PORTAL_NAME }}" -g "${{ vars.AZURE_RESOURCE_GROUP }}" --image "$image" -o none
+          fqdn=$(az containerapp show -n "${{ vars.SERVICE_PORTAL_NAME }}" -g "${{ vars.AZURE_RESOURCE_GROUP }}" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "url=https://$fqdn" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 12); do
+            if curl -fsS -o /dev/null "${{ steps.deploy.outputs.url }}"; then echo "Portal is up"; exit 0; fi
+            echo "Waiting for the portal (cold start)..."; sleep 10
+          done
+          echo "Portal did not respond"; exit 1
+
+  prod:
+    name: deploy-prod
+    needs: dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: prod        # requires manual approval (GitHub environment protection rule)
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build image in ACR
+        run: |
+          az acr build --registry "${{ vars.AZURE_CONTAINER_REGISTRY_NAME }}" \
+            --image "portal:${{ github.sha }}" \
+            --file src/Allocation.Portal/Dockerfile .
+
+      - name: Deploy to Container Apps
+        id: deploy
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          image="${{ vars.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/portal:${{ github.sha }}"
+          az containerapp update -n "${{ vars.SERVICE_PORTAL_NAME }}" -g "${{ vars.AZURE_RESOURCE_GROUP }}" --image "$image" -o none
+          fqdn=$(az containerapp show -n "${{ vars.SERVICE_PORTAL_NAME }}" -g "${{ vars.AZURE_RESOURCE_GROUP }}" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "url=https://$fqdn" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 12); do
+            if curl -fsS -o /dev/null "${{ steps.deploy.outputs.url }}"; then echo "Portal is up"; exit 0; fi
+            echo "Waiting for the portal (cold start)..."; sleep 10
+          done
+          echo "Portal did not respond"; exit 1
