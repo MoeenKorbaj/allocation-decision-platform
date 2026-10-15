@@ -1,0 +1,15 @@
+# Keep the build context small: only what the images need
+**/bin/
+**/obj/
+.git/
+.github/
+.vs/
+.vscode/
+.azure/
+docs/
+eval/
+data/
+prompts/
+infra/
+tests/
+**/*.md
