@@ -10,9 +10,10 @@ COPY src/Allocation.Shared/Allocation.Shared.csproj src/Allocation.Shared/
 COPY src/Allocation.Portal/Allocation.Portal.csproj src/Allocation.Portal/
 RUN dotnet restore src/Allocation.Portal/Allocation.Portal.csproj
 
-# 2. Then copy the sources and publish
-COPY src/Allocation.Shared/ src/Allocation.Shared/
-COPY src/Allocation.Portal/ src/Allocation.Portal/
+# 2. Then copy the sources and publish.
+# One COPY on purpose: Allocation.Shared has no source files yet, so a separate COPY of it
+# creates an empty layer, which the classic builder used by ACR Tasks fails to export.
+COPY src/ src/
 RUN dotnet publish src/Allocation.Portal/Allocation.Portal.csproj \
     -c Release -o /app --no-restore /p:UseAppHost=false
 
