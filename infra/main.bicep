@@ -12,8 +12,10 @@ param environmentName string
 @description('Azure region. Only UAE North is allowed (ADR-15).')
 param location string
 
-@description('GitHub repository (owner/name) allowed to deploy through OIDC.')
-param githubRepository string = 'MoeenKorbaj/allocation-decision-platform'
+// GitHub's immutable OIDC subject format: owner@ownerId/repo@repoId. The numeric IDs make the trust
+// survive a rename and stop a re-created repository with the same name from inheriting it.
+@description('GitHub repository allowed to deploy through OIDC, as owner@ownerId/name@repoId.')
+param githubRepository string = 'MoeenKorbaj@212266441/allocation-decision-platform@1404488591'
 
 @description('Set by azd when the portal container app already exists, so re-provisioning keeps the deployed image.')
 param portalExists bool = false
