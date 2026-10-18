@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\Allocation.Shared\Allocation.Shared.csproj" />
@@ -9,7 +9,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
-    <UserSecretsId>a30490bb-5853-48e4-affe-a19f366b470c</UserSecretsId>
   </PropertyGroup>
 
 </Project>
